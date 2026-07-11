@@ -1,0 +1,1934 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Универсальный конвертер</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/x-icon" href="../icon.ico">
+</head>
+<body>
+    <div class="page-glow page-glow-left"></div>
+    <div class="page-glow page-glow-right"></div>
+
+    <div class="container">
+        <div class="top-actions">
+            <button type="button" class="logout-btn" onclick="window.location.href='logout.php'">Выйти</button>
+        </div>
+        <section class="hero-panel">
+            <div class="hero-copy">
+                <span class="hero-kicker">Конвертер</span>
+                <h1>Конвертация файлов</h1>
+                <p class="hero-text">Загрузи файл, выбери формат и получи результат. Поддерживаются документы, изображения, видео и аудио.</p>
+            </div>
+        </section>
+
+        <div class="header-row">
+            <div class="header-note">Настройки меняются автоматически в зависимости от типа выбранного файла.</div>
+            <button type="button" onclick="resetForm()" class="btn-reset">Сбросить настройки</button>
+        </div>
+
+        <form class="converter-form" id="main-form" method="post" action="convert.php" enctype="multipart/form-data">
+            <div class="card card-upload">
+                <div class="card-title-row">
+                    <h3>1. Выберите файлы</h3>
+                    <span class="card-chip">Загрузка</span>
+                </div>
+                <div class="upload-zone" id="drop-zone">
+                    <input type="file" id="file_input" name="files[]" multiple required>
+                    <div class="upload-content">
+                        <span class="upload-icon">⬆</span>
+                        <p>Перетащите файлы сюда или нажмите для выбора</p>
+                        <small id="file-count">Файлы не выбраны</small>
+                    </div>
+                </div>
+
+                <div class="status-stack" id="status-stack">
+                    <div class="status-box hidden" id="upload-progress-box">
+                        <div class="status-head">
+                            <span id="upload-status-label">Загрузка файла на сервер</span>
+                            <span id="upload-status-percent">0%</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill" id="upload-progress-fill"></div>
+                        </div>
+                    </div>
+
+                    <div class="status-box hidden" id="preview-progress-box">
+                        <div class="status-head">
+                            <span id="preview-status-label">Идёт точный предпросчёт...</span>
+                            <span id="preview-status-percent">0%</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill" id="preview-progress-fill"></div>
+                        </div>
+                    </div>
+
+                    <div class="status-box hidden" id="convert-progress-box">
+                        <div class="status-head">
+                            <span id="convert-status-label">Идёт конвертация...</span>
+                            <span id="convert-status-percent">0%</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill" id="convert-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="file-info" class="file-info"></div>
+                <div id="live-analysis" class="live-analysis"></div>
+                <small class="hint">Поддержка: документы, изображения, видео, аудио</small>
+            </div>
+
+            <div class="card" id="format-card">
+                <div class="card-title-row">
+                    <h3 id="format-card-title">2. Целевой формат</h3>
+                    <span class="card-chip">Формат</span>
+                </div>
+                <div class="form-group format-picker-wrap">
+                    <label id="format-field-label" for="format_menu_trigger">Во что конвертировать</label>
+                    <button type="button" class="format-menu-trigger" id="format_menu_trigger" aria-haspopup="dialog" aria-expanded="false">
+                        <span id="format_menu_trigger_label">PDF</span>
+                        <span class="format-chevron" aria-hidden="true">▼</span>
+                    </button>
+                    <input type="hidden" id="convert_format" name="convert_format" value="pdf">
+                    <p class="format-auto-hint hidden" id="format_auto_hint"></p>
+                </div>
+            </div>
+
+            <div class="card" id="quality-card">
+                <div class="card-title-row">
+                    <h3>3. Качество и сжатие</h3>
+                    <span class="card-chip">Качество</span>
+                </div>
+
+                <div class="section-placeholder" id="quality-placeholder">
+                    Загрузи файл, и здесь появятся нужные настройки качества.
+                </div>
+
+                <div id="media-quality-panel" class="hidden">
+                    <div class="quality-container">
+                        <div class="quality-labels">
+                            <span class="quality-main">Качество: <b id="quality-val">100</b>%</span>
+                            <span class="quality-side">Сжатие: <b id="compression-val">20</b>%</span>
+                        </div>
+
+                        <input type="range" id="quality" name="quality" min="10" max="100" step="10" value="100">
+
+                        <div class="ticks-row">
+                            <span>10</span><span>20</span><span>30</span><span>40</span><span>50</span><span>60</span><span>70</span><span>80</span><span>90</span><span>100</span>
+                        </div>
+
+                        <div class="quality-desc">
+                            <small>Меньше вес</small>
+                            <small>Лучше качество</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="preset-quality-panel" class="hidden">
+                    <div class="doc-mode-grid">
+                        <button type="button" class="doc-mode-btn" data-doc-quality="20">Сильное сжатие</button>
+                        <button type="button" class="doc-mode-btn" data-doc-quality="60">Среднее</button>
+                        <button type="button" class="doc-mode-btn active" data-doc-quality="90">Минимальное сжатие</button>
+                    </div>
+                    <div class="doc-mode-note" id="doc-mode-note">
+                        Для документов и аудио — три режима вместо ползунка. По умолчанию выбрано минимальное сжатие (максимальное качество).
+                    </div>
+                </div>
+
+                <div class="checkbox-group hidden" id="no-compress-wrap">
+                    <label>
+                        <input type="checkbox" id="no_compress" name="no_compress">
+                        Без дополнительного сжатия (только конвертация)
+                    </label>
+                </div>
+
+                <div class="checkbox-group hidden" id="strip-meta-wrap">
+                    <label>
+                        <input type="checkbox" id="strip_meta" name="strip_meta">
+                        Удалить метаданные, если это возможно
+                    </label>
+                </div>
+            </div>
+
+            <div class="card hidden" id="image-tools-card">
+                <div class="card-head">
+                    <div class="card-title-row compact">
+                        <h3>4. Размер изображения</h3>
+                    <span class="card-chip">Размер</span>
+                    </div>
+                    <button type="button" class="btn-secondary" id="toggle-image-editor">Редактировать размер изображения</button>
+                </div>
+                <div class="image-summary" id="image-summary"></div>
+                <div class="image-editor-panel hidden" id="image-editor-panel">
+                    <div class="image-size-grid">
+                        <div class="slider-block">
+                            <div class="slider-head">
+                                <label for="image_width_slider">Ширина</label>
+                                <span id="image_width_value">0 px</span>
+                            </div>
+                            <input type="range" id="image_width_slider" min="1" max="100" value="100">
+                        </div>
+                        <div class="slider-block">
+                            <div class="slider-head">
+                                <label for="image_height_slider">Высота</label>
+                                <span id="image_height_value">0 px</span>
+                            </div>
+                            <input type="range" id="image_height_slider" min="1" max="100" value="100">
+                        </div>
+                    </div>
+                    <div class="image-tools-row">
+                        <label class="checkbox-inline">
+                            <input type="checkbox" id="lock_aspect" checked>
+                            Сохранять пропорции
+                        </label>
+                        <button type="button" class="btn-link" id="reset-image-size">Сбросить размер</button>
+                    </div>
+                    <div class="image-summary muted" id="image-result-summary"></div>
+                </div>
+                <input type="hidden" name="resize_w" id="resize_w" value="0">
+                <input type="hidden" name="resize_h" id="resize_h" value="0">
+            </div>
+
+            <button type="submit" class="btn-submit" id="submit-btn">
+                <span>Конвертировать</span>
+            </button>
+        </form>
+    </div>
+
+    <div class="format-overlay hidden" id="format_overlay" aria-hidden="true">
+        <div class="format-backdrop" id="format_backdrop" tabindex="-1"></div>
+        <div class="format-sheet" role="dialog" aria-modal="true" aria-labelledby="format_sheet_title">
+            <div class="format-sheet-head">
+                <span id="format_sheet_title">Выберите формат</span>
+                <button type="button" class="format-sheet-close" id="format_sheet_close" aria-label="Закрыть">✕</button>
+            </div>
+            <div class="format-sheet-body" id="format_sheet_body"></div>
+        </div>
+    </div>
+
+    <script>
+
+        const fileInput = document.getElementById('file_input');
+        const fileCountSpan = document.getElementById('file-count');
+        const fileInfo = document.getElementById('file-info');
+        const liveAnalysis = document.getElementById('live-analysis');
+
+        const qualityInput = document.getElementById('quality');
+        const qualityVal = document.getElementById('quality-val');
+        const compressionVal = document.getElementById('compression-val');
+        const formatInput = document.getElementById('convert_format');
+        const formatCard = document.getElementById('format-card');
+        const formatMenuTrigger = document.getElementById('format_menu_trigger');
+        const formatMenuTriggerLabel = document.getElementById('format_menu_trigger_label');
+        const formatOverlay = document.getElementById('format_overlay');
+        const formatBackdrop = document.getElementById('format_backdrop');
+        const formatSheetClose = document.getElementById('format_sheet_close');
+        const formatSheetBody = document.getElementById('format_sheet_body');
+        const formatAutoHint = document.getElementById('format_auto_hint');
+        const formatCardTitle = document.getElementById('format-card-title');
+        const formatFieldLabel = document.getElementById('format-field-label');
+
+        const DOCUMENT_FORMAT_OPTIONS = [
+            { value: 'pdf', label: 'PDF' },
+            { value: 'docx', label: 'DOCX' },
+            { value: 'xlsx', label: 'XLSX' },
+            { value: 'pptx', label: 'PPTX' },
+            { value: 'txt', label: 'TXT' },
+        ];
+        
+        const IMAGE_FORMAT_OPTIONS = [
+            { value: 'jpeg', label: 'JPEG' },
+            { value: 'png', label: 'PNG' },
+            { value: 'webp', label: 'WEBP' },
+            { value: 'gif', label: 'GIF' },
+            { value: 'bmp', label: 'BMP' },
+            { value: 'avif', label: 'AVIF' },
+            { value: 'pdf', label: 'PDF' },
+        ];
+
+        const VIDEO_FORMAT_OPTIONS = [
+            { value: 'mp4', label: 'MP4' },
+            { value: 'webm', label: 'WEBM' },
+            { value: 'mkv', label: 'MKV' },
+            { value: 'mov', label: 'MOV' },
+            { value: 'avi', label: 'AVI' },
+            { value: 'gif', label: 'GIF' },
+        ];
+
+        const AUDIO_FORMAT_OPTIONS = [
+            { value: 'mp3', label: 'MP3' },
+            { value: 'wav', label: 'WAV' },
+            { value: 'ogg', label: 'OGG' },
+            { value: 'm4a', label: 'M4A' },
+            { value: 'aac', label: 'AAC' },
+            { value: 'flac', label: 'FLAC' },
+        ];
+
+        const VIDEO_CONTAINER_EXTS = ['mp4', 'webm', 'mkv', 'mov', 'avi'];
+        const AUDIO_CONTAINER_EXTS = ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac'];
+        const resizeWInput = document.getElementById('resize_w');
+        const resizeHInput = document.getElementById('resize_h');
+        const stripMetaInput = document.getElementById('strip_meta');
+        const stripMetaWrap = document.getElementById('strip-meta-wrap');
+        const noCompressInput = document.getElementById('no_compress');
+        const noCompressWrap = document.getElementById('no-compress-wrap');
+
+        const dropZone = document.getElementById('drop-zone');
+        const form = document.getElementById('main-form');
+        const submitBtn = document.getElementById('submit-btn');
+
+        const qualityPlaceholder = document.getElementById('quality-placeholder');
+        const mediaQualityPanel = document.getElementById('media-quality-panel');
+        const presetQualityPanel = document.getElementById('preset-quality-panel');
+        const docModeButtons = Array.from(document.querySelectorAll('.doc-mode-btn'));
+
+        const imageToolsCard = document.getElementById('image-tools-card');
+        const imageEditorPanel = document.getElementById('image-editor-panel');
+        const toggleImageEditorBtn = document.getElementById('toggle-image-editor');
+        const imageSummary = document.getElementById('image-summary');
+        const imageResultSummary = document.getElementById('image-result-summary');
+        const imageWidthSlider = document.getElementById('image_width_slider');
+        const imageHeightSlider = document.getElementById('image_height_slider');
+        const imageWidthValue = document.getElementById('image_width_value');
+        const imageHeightValue = document.getElementById('image_height_value');
+        const lockAspectInput = document.getElementById('lock_aspect');
+        const resetImageSizeBtn = document.getElementById('reset-image-size');
+
+        const uploadProgressBox = document.getElementById('upload-progress-box');
+        const uploadProgressFill = document.getElementById('upload-progress-fill');
+        const uploadStatusLabel = document.getElementById('upload-status-label');
+        const uploadStatusPercent = document.getElementById('upload-status-percent');
+
+        const previewProgressBox = document.getElementById('preview-progress-box');
+        const previewProgressFill = document.getElementById('preview-progress-fill');
+        const previewStatusLabel = document.getElementById('preview-status-label');
+        const previewStatusPercent = document.getElementById('preview-status-percent');
+
+        const convertProgressBox = document.getElementById('convert-progress-box');
+        const convertProgressFill = document.getElementById('convert-progress-fill');
+        const convertStatusLabel = document.getElementById('convert-status-label');
+        const convertStatusPercent = document.getElementById('convert-status-percent');
+
+        let uploadedFiles = [];
+        /** Все токены предпросмотра за текущую загрузку (каждый пересчёт — новый файл в temp_preview). */
+        const sessionPreviewTokens = new Set();
+        let currentPreviewToken = '';
+        let currentExactPreview = null;
+        let currentExactPreviewSignature = '';
+        let previewPending = false;
+        let previewTimer = null;
+        let previewRequestId = 0;
+        let previewAbortController = null;
+
+        let uploadState = { active: false, percent: 0, label: '' };
+        let previewState = { active: false, percent: 0, label: '' };
+        let convertState = { active: false, percent: 0, label: '' };
+
+        let previewTicker = null;
+        let convertTicker = null;
+
+        let imageEditorOpen = false;
+        let imageSizeState = { originalWidth: 0, originalHeight: 0, width: 0, height: 0 };
+
+        function formatBytes(bytes) {
+            if (!bytes || bytes <= 0) return '0 Б';
+            const units = ['Б', 'КБ', 'МБ', 'ГБ', 'ТБ'];
+            const i = Math.floor(Math.log(bytes) / Math.log(1024));
+            const value = bytes / Math.pow(1024, i);
+            return value.toFixed(value >= 100 || i === 0 ? 0 : 1) + ' ' + units[i];
+        }
+
+        function formatDuration(seconds) {
+            if (!seconds || !isFinite(seconds)) return '—';
+            const s = Math.floor(seconds % 60);
+            const m = Math.floor((seconds / 60) % 60);
+            const h = Math.floor(seconds / 3600);
+            return h > 0
+                ? `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+                : `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function getExt(name) {
+            const parts = String(name).toLowerCase().split('.');
+            return parts.length > 1 ? parts.pop() : '';
+        }
+
+        function getAutoVideoFormat(name) {
+            const ext = getExt(name);
+            if (ext === 'm4v') return 'mp4';
+            if (VIDEO_CONTAINER_EXTS.includes(ext)) return ext;
+            return 'mp4';
+        }
+
+        function getAutoAudioFormat(name) {
+            const ext = getExt(name);
+            if (AUDIO_CONTAINER_EXTS.includes(ext)) return ext;
+            return 'mp3';
+        }
+
+        function formatOptionLabel(value) {
+            const v = String(value || '').toLowerCase();
+            const all = [
+                ...DOCUMENT_FORMAT_OPTIONS,
+                ...IMAGE_FORMAT_OPTIONS,
+                ...VIDEO_FORMAT_OPTIONS,
+                ...AUDIO_FORMAT_OPTIONS,
+            ];
+            const found = all.find((o) => o.value === v);
+            return found ? found.label : v.toUpperCase();
+        }
+
+        function updateFormatTriggerLabel() {
+            formatMenuTriggerLabel.textContent = formatOptionLabel(formatInput.value);
+        }
+
+        function showsFormatPicker() {
+            if (!uploadedFiles.length) return false;
+            const t = getPrimaryType();
+            return t === 'document' || t === 'image' || t === 'video' || t === 'audio';
+        }
+
+        function applyAutoTargetFormat() {
+            if (!uploadedFiles.length) return;
+
+            const first = uploadedFiles[0];
+            const t = first.type;
+            const current = String(formatInput.value || '').toLowerCase();
+
+            if (t === 'video') {
+                const allowed = VIDEO_FORMAT_OPTIONS.map((o) => o.value);
+                if (!allowed.includes(current)) {
+                    formatInput.value = getAutoVideoFormat(first.name);
+                }
+            } else if (t === 'audio') {
+                const allowed = AUDIO_FORMAT_OPTIONS.map((o) => o.value);
+                if (!allowed.includes(current)) {
+                    formatInput.value = getAutoAudioFormat(first.name);
+                }
+            } else if (t === 'image') {
+                const allowed = IMAGE_FORMAT_OPTIONS.map((o) => o.value);
+                if (!allowed.includes(current)) formatInput.value = 'webp';
+            } else if (t === 'document') {
+                const allowed = DOCUMENT_FORMAT_OPTIONS.map((o) => o.value);
+                if (!allowed.includes(current)) formatInput.value = 'pdf';
+            }
+            updateFormatTriggerLabel();
+        }
+
+        function updateFormatCardUi() {
+            if (!uploadedFiles.length) {
+                formatMenuTrigger.classList.remove('hidden', 'is-locked');
+                formatMenuTrigger.disabled = true;
+                formatMenuTriggerLabel.textContent = 'Сначала загрузите файл';
+                formatAutoHint.classList.add('hidden');
+                formatCardTitle.textContent = '2. Целевой формат';
+                formatFieldLabel.textContent = 'Во что конвертировать';
+                return;
+            }
+        
+            const t = getPrimaryType();
+            applyAutoTargetFormat();
+        
+            if (t === 'video') {
+                const autoExt = getAutoVideoFormat(uploadedFiles[0]?.name || 'mp4').toUpperCase();
+                const selected = String(formatInput.value || autoExt).toUpperCase();
+            
+                formatMenuTrigger.classList.remove('hidden', 'is-locked');
+                formatMenuTrigger.disabled = false;
+                formatMenuTriggerLabel.textContent = selected;
+            
+                formatAutoHint.classList.remove('hidden');
+                formatAutoHint.textContent = selected === 'GIF'
+                    ? 'Видео будет конвертировано в GIF-анимацию без звука.'
+                    : `По умолчанию стоит исходный формат (${autoExt}), но можно выбрать GIF или другой видеоформат.`;
+            
+                formatCardTitle.textContent = '2. Целевой формат';
+                formatFieldLabel.textContent = 'Во что конвертировать';
+                updateFormatTriggerLabel();
+                return;
+            }
+        
+            if (t === 'audio') {
+                const autoExt = getAutoAudioFormat(uploadedFiles[0]?.name || 'mp3').toUpperCase();
+                const selected = String(formatInput.value || autoExt).toUpperCase();
+
+                formatMenuTrigger.classList.remove('hidden', 'is-locked');
+                formatMenuTrigger.disabled = false;
+                formatMenuTriggerLabel.textContent = selected;
+
+                formatAutoHint.classList.remove('hidden');
+                formatAutoHint.textContent = `По умолчанию стоит исходный формат (${autoExt}), но можно выбрать AAC или другой аудиоформат.`;
+                formatCardTitle.textContent = '2. Целевой формат';
+                formatFieldLabel.textContent = 'Во что конвертировать';
+                updateFormatTriggerLabel();
+                return;
+            }
+        
+            formatMenuTrigger.classList.remove('hidden', 'is-locked');
+            formatMenuTrigger.disabled = false;
+            formatAutoHint.classList.add('hidden');
+            formatCardTitle.textContent = '2. Целевой формат';
+            formatFieldLabel.textContent = 'Во что конвертировать';
+            updateFormatTriggerLabel();
+        }
+
+        function buildFormatMenuContent() {
+            const t = getPrimaryType();
+        
+            let opts = DOCUMENT_FORMAT_OPTIONS;
+            let sectionLabel = 'Документы';
+        
+            if (t === 'image') {
+                opts = IMAGE_FORMAT_OPTIONS;
+                sectionLabel = 'Изображения';
+            } else if (t === 'video') {
+                opts = VIDEO_FORMAT_OPTIONS;
+                sectionLabel = 'Видео';
+            } else if (t === 'audio') {
+                opts = AUDIO_FORMAT_OPTIONS;
+                sectionLabel = 'Аудио';
+            }
+            formatSheetBody.innerHTML = `
+                <div class="format-section-label">${escapeHtml(sectionLabel)}</div>
+                <div class="format-btn-grid">
+                    ${opts.map((o) => `
+                        <button type="button" class="format-option-btn${formatInput.value === o.value ? ' selected' : ''}" data-format="${escapeHtml(o.value)}">${escapeHtml(o.label)}</button>
+                    `).join('')}
+                </div>`;
+            formatSheetBody.querySelectorAll('.format-option-btn').forEach((btn) => {
+                btn.addEventListener('click', () => selectFormatOption(btn.dataset.format));
+            });
+        }
+
+        function selectFormatOption(value) {
+            if (!value) return;
+            formatInput.value = value;
+            updateFormatTriggerLabel();
+            closeFormatMenu();
+            refreshPanels();
+            scheduleExactPreview();
+        }
+
+        function openFormatMenu() {
+            if (!showsFormatPicker()) return;
+            buildFormatMenuContent();
+            formatOverlay.classList.remove('hidden');
+            formatOverlay.setAttribute('aria-hidden', 'false');
+            formatMenuTrigger.setAttribute('aria-expanded', 'true');
+            document.body.classList.add('format-menu-open');
+        }
+
+        function closeFormatMenu() {
+            formatOverlay.classList.add('hidden');
+            formatOverlay.setAttribute('aria-hidden', 'true');
+            formatMenuTrigger.setAttribute('aria-expanded', 'false');
+            document.body.classList.remove('format-menu-open');
+        }
+
+        function getPrettyType(type) {
+            if (type === 'image') return 'Изображение';
+            if (type === 'video') return 'Видео';
+            if (type === 'audio') return 'Аудио';
+            if (type === 'document') return 'Документ';
+            return 'Файл';
+        }
+
+        function getPrimaryType() {
+            return uploadedFiles.length ? uploadedFiles[0].type : '';
+        }
+
+        function isImageMode() {
+            return uploadedFiles.length === 1 && getPrimaryType() === 'image';
+        }
+
+        function isMediaScaleMode() {
+            return ['image', 'video'].includes(getPrimaryType());
+        }
+
+        function isPresetMode() {
+            const type = getPrimaryType();
+            return !!type && !['image', 'video'].includes(type);
+        }
+
+        /** После загрузки файла выставляет качество: для документов/аудио — минимальное сжатие (90), для изображений/видео — ползунок 80 %. Без этого скрытое поле quality оставалось 80 при активной кнопке «Среднее» и прогноз не совпадал с UI. */
+        function syncQualityForUploadedFileType() {
+            if (!uploadedFiles.length) return;
+
+            if (isPresetMode()) {
+                qualityInput.value = '90';
+                docModeButtons.forEach((btn) => {
+                    btn.classList.toggle('active', String(btn.dataset.docQuality) === '90');
+                });
+            } else {
+                qualityInput.value = '100';
+            }
+            updateQualityDisplay();
+        }
+
+        function updateQualityDisplay() {
+            let val = parseInt(qualityInput.value || '100', 10);
+        
+            if (noCompressInput.checked) {
+                val = 100;
+                qualityInput.value = '100';
+            } else if (uploadedFiles.length === 1 && !qualityAffectsCurrentSelection(uploadedFiles[0])) {
+                val = 100;
+                qualityInput.value = '100';
+            }
+        
+            qualityVal.textContent = val;
+            compressionVal.textContent = 100 - val;
+        }
+        
+        function updateCompressionModeUi() {
+            const hasFiles = uploadedFiles.length > 0;
+            const locked = hasFiles && noCompressInput.checked;
+        
+            qualityInput.disabled = locked;
+        
+            docModeButtons.forEach((btn) => {
+                btn.disabled = locked;
+            });
+        
+            if (locked) {
+                qualityInput.value = '100';
+                docModeButtons.forEach((btn) => {
+                    btn.classList.toggle('active', btn.dataset.docQuality === '90');
+                });
+            }
+        }
+
+        function setPresetQuality(value) {
+            qualityInput.value = String(value);
+            docModeButtons.forEach((btn) => {
+                btn.classList.toggle('active', String(btn.dataset.docQuality) === String(value));
+            });
+            refreshPanels();
+            scheduleExactPreview();
+        }
+
+        function syncQualityPanels() {
+            const hasFiles = uploadedFiles.length > 0;
+            qualityPlaceholder.classList.toggle('hidden', hasFiles);
+            mediaQualityPanel.classList.toggle('hidden', !hasFiles || !isMediaScaleMode());
+            presetQualityPanel.classList.toggle('hidden', !hasFiles || !isPresetMode());
+            stripMetaWrap.classList.toggle('hidden', !hasFiles);
+            noCompressWrap.classList.toggle('hidden', !hasFiles);
+        }
+
+        function updateStatusUI() {
+            uploadProgressBox.classList.toggle('hidden', !uploadState.active);
+            uploadProgressFill.style.width = `${Math.max(0, Math.min(100, uploadState.percent || 0))}%`;
+            uploadStatusLabel.textContent = uploadState.label || 'Загрузка файла на сервер';
+            uploadStatusPercent.textContent = `${Math.round(uploadState.percent || 0)}%`;
+
+            previewProgressBox.classList.toggle('hidden', !previewState.active);
+            previewProgressFill.style.width = `${Math.max(0, Math.min(100, previewState.percent || 0))}%`;
+            previewStatusLabel.textContent = previewState.label || 'Идёт точный предпросчёт...';
+            previewStatusPercent.textContent = `${Math.round(previewState.percent || 0)}%`;
+
+            convertProgressBox.classList.toggle('hidden', !convertState.active);
+            convertProgressFill.style.width = `${Math.max(0, Math.min(100, convertState.percent || 0))}%`;
+            convertStatusLabel.textContent = convertState.label || 'Идёт конвертация...';
+            convertStatusPercent.textContent = `${Math.round(convertState.percent || 0)}%`;
+        }
+
+        function startUploadProgress(label) {
+            uploadState = { active: true, percent: 0, label: label || 'Загрузка файла на сервер' };
+            updateStatusUI();
+        }
+
+        function setUploadProgress(percent, label) {
+            uploadState.active = true;
+            uploadState.percent = percent;
+            if (label) uploadState.label = label;
+            updateStatusUI();
+        }
+
+        function stopUploadProgress() {
+            uploadState = { active: false, percent: 0, label: '' };
+            updateStatusUI();
+        }
+
+        function clearPreviewTicker() {
+            if (previewTicker) {
+                clearInterval(previewTicker);
+                previewTicker = null;
+            }
+        }
+
+        function clearConvertTicker() {
+            if (convertTicker) {
+                clearInterval(convertTicker);
+                convertTicker = null;
+            }
+        }
+
+        function startPreviewProgress(label) {
+            clearPreviewTicker();
+
+            previewState = {
+                active: true,
+                percent: 2,
+                label: label || 'Идёт точный предпросчёт...'
+            };
+            updateStatusUI();
+
+            previewTicker = setInterval(() => {
+                if (!previewState.active) return;
+
+                const cap = 92;
+                let step = 1.3;
+
+                if (previewState.percent < 15) step = 4.0;
+                else if (previewState.percent < 35) step = 2.6;
+                else if (previewState.percent < 65) step = 1.5;
+                else if (previewState.percent < 85) step = 0.8;
+                else step = 0.3;
+
+                previewState.percent = Math.min(cap, previewState.percent + step);
+                updateStatusUI();
+            }, 350);
+        }
+
+        function setPreviewProgress(percent, label = '') {
+            previewState.active = true;
+            previewState.percent = Math.max(0, Math.min(100, percent));
+            if (label) previewState.label = label;
+            updateStatusUI();
+        }
+
+        function stopPreviewProgress() {
+            clearPreviewTicker();
+            previewState = { active: false, percent: 0, label: '' };
+            updateStatusUI();
+        }
+
+        function startConvertProgress(label) {
+            clearConvertTicker();
+
+            convertState = {
+                active: true,
+                percent: 4,
+                label: label || 'Идёт конвертация...'
+            };
+            updateStatusUI();
+
+            convertTicker = setInterval(() => {
+                if (!convertState.active) return;
+
+                const cap = 95;
+                let step = 1.5;
+
+                if (convertState.percent < 15) step = 4.4;
+                else if (convertState.percent < 35) step = 2.9;
+                else if (convertState.percent < 65) step = 1.8;
+                else if (convertState.percent < 85) step = 0.95;
+                else step = 0.35;
+
+                convertState.percent = Math.min(cap, convertState.percent + step);
+                updateStatusUI();
+            }, 350);
+        }
+
+        function setConvertProgress(percent, label = '') {
+            const safePercent = Math.max(0, Math.min(100, percent));
+        
+            if (safePercent >= 98) {
+                clearConvertTicker();
+            }
+        
+            convertState.active = true;
+            convertState.percent = safePercent;
+            if (label) convertState.label = label;
+            updateStatusUI();
+        }
+
+        function stopConvertProgress(resetPercent = true) {
+            clearConvertTicker();
+        
+            if (resetPercent) {
+                convertState = { active: false, percent: 0, label: '' };
+            } else {
+                convertState.active = false;
+            }
+        
+            updateStatusUI();
+        }
+
+        function getTargetBitrateKbpsByQuality(quality, type = 'video') {
+            if (type === 'audio') {
+                if (quality >= 95) return 320;
+                if (quality >= 85) return 256;
+                if (quality >= 70) return 192;
+                if (quality >= 55) return 160;
+                if (quality >= 40) return 128;
+                return 96;
+            }
+
+            if (quality >= 95) return 9000;
+            if (quality >= 90) return 7000;
+            if (quality >= 80) return 4500;
+            if (quality >= 70) return 3000;
+            if (quality >= 60) return 2200;
+            if (quality >= 50) return 1600;
+            if (quality >= 40) return 1100;
+            if (quality >= 30) return 800;
+            return 500;
+        }
+
+        function getVideoTargetBitrateKbps(quality, sourceVideoBitrate = 0) {
+            quality = Math.max(10, Math.min(100, parseInt(quality || 100, 10)));
+
+            if (sourceVideoBitrate > 0) {
+                const minFactor = 0.18;
+                const maxFactor = 1.00;
+                const factor = minFactor + ((quality - 10) / 90) * (maxFactor - minFactor);
+                return Math.max(250, Math.round(sourceVideoBitrate * factor));
+            }
+
+            return getTargetBitrateKbpsByQuality(quality, 'video');
+        }
+
+        function getVideoAudioTargetBitrateKbps(quality, targetFormat) {
+            targetFormat = String(targetFormat || '').toLowerCase();
+
+            if (targetFormat === 'webm') {
+                if (quality >= 85) return 128;
+                if (quality >= 55) return 96;
+                return 64;
+            }
+
+            if (quality >= 85) return 192;
+            if (quality >= 60) return 128;
+            return 96;
+        }
+
+        function getImageRatio(ext, format, quality) {
+            ext = ext.toLowerCase();
+            format = format.toLowerCase();
+
+            if (format === 'jpeg' || format === 'jpg') {
+                if (quality >= 85) return 0.55;
+                if (quality >= 70) return 0.42;
+                if (quality >= 55) return 0.32;
+                if (quality >= 40) return 0.24;
+                return 0.18;
+            }
+
+            if (format === 'webp') {
+                if (quality >= 85) return 0.42;
+                if (quality >= 70) return 0.32;
+                if (quality >= 55) return 0.24;
+                if (quality >= 40) return 0.18;
+                return 0.12;
+            }
+
+            if (format === 'png') {
+                if (ext === 'png') {
+                    if (quality >= 85) return 0.85;
+                    if (quality >= 70) return 0.70;
+                    if (quality >= 55) return 0.55;
+                    return 0.40;
+                }
+                return 1.3;
+            }
+
+            if (format === 'avif') {
+                if (quality >= 85) return 0.30;
+                if (quality >= 70) return 0.22;
+                if (quality >= 55) return 0.16;
+                return 0.10;
+            }
+
+            return 0.65;
+        }
+
+        function getDocumentRatio(ext, format, quality) {
+            ext = ext.toLowerCase();
+            format = format.toLowerCase();
+
+            if (format !== 'pdf') return 1;
+
+            // Совпадает с шагами Ghostscript в convert.php: /screen → /ebook → /printer → /prepress → /default.
+            // DOC/DOCX — zip+XML, размер исходника слабо связан с PDF; при «сильном сжатии» (/screen, 72 dpi) итог часто ~5–12% от веса docx, а не 40%.
+            let tier = 4;
+            if (quality <= 25) tier = 0;
+            else if (quality <= 45) tier = 1;
+            else if (quality <= 65) tier = 2;
+            else if (quality <= 85) tier = 3;
+
+            const wordish = ['doc', 'docx', 'rtf'];
+            if (wordish.includes(ext)) {
+                return [0.072, 0.13, 0.24, 0.42, 0.68][tier];
+            }
+
+            if (ext === 'pdf') {
+                return [0.36, 0.5, 0.64, 0.78, 0.9][tier];
+            }
+
+            return [0.1, 0.19, 0.33, 0.5, 0.72][tier];
+        }
+
+        function getResizeFactor(meta) {
+            const resizeW = parseInt(resizeWInput.value || '0', 10);
+            const resizeH = parseInt(resizeHInput.value || '0', 10);
+
+            if (!meta || !meta.width || !meta.height) return 1;
+            if (!resizeW && !resizeH) return 1;
+
+            let targetW = resizeW;
+            let targetH = resizeH;
+
+            if (targetW > 0 && targetH <= 0) {
+                targetH = Math.round(targetW * (meta.height / meta.width));
+            } else if (targetW <= 0 && targetH > 0) {
+                targetW = Math.round(targetH * (meta.width / meta.height));
+            } else if (targetW > 0 && targetH > 0) {
+                const ratio = Math.min(targetW / meta.width, targetH / meta.height);
+                targetW = Math.round(meta.width * ratio);
+                targetH = Math.round(meta.height * ratio);
+            }
+
+            if (!targetW || !targetH) return 1;
+            return Math.min(1, (targetW * targetH) / (meta.width * meta.height));
+        }
+
+        function estimateOutput(item) {
+            const meta = item.meta || {};
+            const type = item.type;
+            const targetFormat = String(formatInput.value || '').toLowerCase();
+            const quality = parseInt(qualityInput.value || '100', 10);
+            const sourceSize = item.size;
+
+            if (isNoOpConversionForItem(item)) {
+                return { size: sourceSize };
+            }
+
+            const exactPreviewUsable =
+                currentExactPreview &&
+                uploadedFiles.length === 1 &&
+                item === uploadedFiles[0] &&
+                currentExactPreviewSignature === buildPreviewSignature(item);
+            
+            if (exactPreviewUsable) {
+                const base = { size: currentExactPreview.size || sourceSize };
+                if (type === 'video') {
+                    const sourceVideoBitrate = meta.video_bitrate ? Math.round(meta.video_bitrate / 1000) : 0;
+                    let targetVideoBitrate = getVideoTargetBitrateKbps(quality, sourceVideoBitrate);
+                    targetVideoBitrate = Math.max(250, Math.round(targetVideoBitrate * Math.max(0.35, getResizeFactor(meta))));
+                    base.videoBitrateKbps = targetVideoBitrate;
+                    base.bitrateKbps = targetVideoBitrate + getVideoAudioTargetBitrateKbps(quality, targetFormat);
+                }
+                return base;
+            }
+
+            if (type === 'video') {
+                const duration = Number(meta.duration || 0);
+                const sourceVideoBitrate = meta.video_bitrate ? Math.round(meta.video_bitrate / 1000) : 0;
+                let targetVideoBitrate = getVideoTargetBitrateKbps(quality, sourceVideoBitrate);
+                targetVideoBitrate = Math.max(250, Math.round(targetVideoBitrate * Math.max(0.35, getResizeFactor(meta))));
+            
+                if (targetFormat === 'gif') {
+                    const gifBitrate = Math.max(180, Math.round(targetVideoBitrate * 0.7));
+            
+                    if (duration > 0) {
+                        return {
+                            size: Math.round((gifBitrate * 1000 / 8) * duration),
+                            bitrateKbps: gifBitrate,
+                            videoBitrateKbps: gifBitrate
+                        };
+                    }
+            
+                    return {
+                        size: Math.round(sourceSize * Math.max(0.06, Math.min(0.9, gifBitrate / 3000))),
+                        videoBitrateKbps: gifBitrate,
+                        bitrateKbps: gifBitrate
+                    };
+                }
+            
+                const totalBitrate = targetVideoBitrate + getVideoAudioTargetBitrateKbps(quality, targetFormat);
+            
+                if (duration > 0) {
+                    return {
+                        size: Math.round((totalBitrate * 1000 / 8) * duration),
+                        bitrateKbps: totalBitrate,
+                        videoBitrateKbps: targetVideoBitrate
+                    };
+                }
+            
+                return {
+                    size: Math.round(sourceSize * Math.max(0.08, Math.min(1, totalBitrate / 4000))),
+                    videoBitrateKbps: targetVideoBitrate,
+                    bitrateKbps: totalBitrate
+                };
+            }
+
+            if (type === 'audio') {
+                const duration = Number(meta.duration || 0);
+                const bitrate = getTargetBitrateKbpsByQuality(quality, 'audio');
+
+                if (duration > 0) {
+                    return { size: Math.round((bitrate * 1000 / 8) * duration), bitrateKbps: bitrate };
+                }
+
+                return { size: Math.round(sourceSize * (bitrate / 192)), bitrateKbps: bitrate };
+            }
+
+            if (type === 'image') {
+                const ratio = getImageRatio(getExt(item.name), targetFormat, quality);
+                return {
+                    size: Math.round(sourceSize * Math.max(0.03, ratio * Math.max(0.15, getResizeFactor(meta))))
+                };
+            }
+
+            if (type === 'document') {
+                return { size: Math.round(sourceSize * getDocumentRatio(getExt(item.name), targetFormat, quality)) };
+            }
+
+            return { size: sourceSize };
+        }
+
+        function getOutputFileName(fileName) {
+            const parts = String(fileName).split('.');
+            if (parts.length < 2) return fileName + '_new';
+            const ext = parts.pop();
+            return parts.join('.') + '_new.' + (formatInput.value || ext);
+        }
+
+
+        function normalizeFormatValue(value) {
+            const v = String(value || '').toLowerCase();
+            return v === 'jpeg' ? 'jpg' : v;
+        }
+        
+        function buildPreviewSignature(file) {
+            if (!file) return '';
+        
+            return JSON.stringify({
+                token: file.token || '',
+                type: file.type || '',
+                ext: normalizeFormatValue(file.ext || getExt(file.name)),
+                format: normalizeFormatValue(formatInput.value || ''),
+                quality: parseInt(qualityInput.value || '100', 10),
+                resize_w: parseInt(resizeWInput.value || '0', 10),
+                resize_h: parseInt(resizeHInput.value || '0', 10),
+                strip_meta: !!stripMetaInput.checked,
+                no_compress: !!noCompressInput.checked
+            });
+        }
+        
+        function qualityAffectsCurrentSelection(item = uploadedFiles[0]) {
+            if (!item) return false;
+        
+            const type = item.type;
+            const sourceExt = normalizeFormatValue(item.ext || getExt(item.name));
+            const targetExt = normalizeFormatValue(formatInput.value || '');
+        
+            if (type === 'video' || type === 'audio') {
+                return true;
+            }
+        
+            if (type === 'image') {
+                // Для gif качество в текущей серверной ветке не влияет
+                if (targetExt === 'gif') return false;
+        
+                // Для pdf теперь влияет после правки convert.php
+                if (targetExt === 'pdf') return true;
+        
+                return ['jpg', 'jpeg', 'png', 'webp', 'avif'].includes(targetExt);
+            }
+        
+            if (type === 'document') {
+                return targetExt === 'pdf';
+            }
+        
+            return false;
+        }
+
+        function isNoOpConversionForItem(item) {
+            if (!item) return false;
+            const sourceExt = normalizeFormatValue(item.ext || getExt(item.name));
+            const targetExt = normalizeFormatValue(formatInput.value || sourceExt);
+            return (
+                sourceExt === targetExt &&
+                parseInt(qualityInput.value || '100', 10) === 100 &&
+                parseInt(resizeWInput.value || '0', 10) === 0 &&
+                parseInt(resizeHInput.value || '0', 10) === 0 &&
+                !stripMetaInput.checked
+            );
+        }
+
+        function renderSingleFileInfo(item) {
+            const meta = item.meta || {};
+            let extra = '';
+
+            if (item.type === 'image' && meta.width && meta.height) {
+                extra += `<div class="file-meta">Разрешение: ${meta.width} × ${meta.height}</div>`;
+            }
+
+            if ((item.type === 'video' || item.type === 'audio') && meta.duration) {
+                extra += `<div class="file-meta">Длительность: ${formatDuration(meta.duration)}</div>`;
+            }
+
+            if (item.type === 'video' && meta.width && meta.height) {
+                extra += `<div class="file-meta">Кадр: ${meta.width} × ${meta.height}</div>`;
+            }
+
+            return `
+                <div class="file-row">
+                    <div class="file-name">${escapeHtml(item.name)}</div>
+                    <div class="file-meta">Тип: ${getPrettyType(item.type)}</div>
+                    <div class="file-meta">Размер: ${formatBytes(item.size)}</div>
+                    ${extra}
+                </div>
+            `;
+        }
+
+        function renderMultipleFilesInfo(items) {
+            return items.map((item, index) => `
+                <div class="file-row">
+                    <div class="file-name">${index + 1}. ${escapeHtml(item.name)}</div>
+                    <div class="file-meta">${getPrettyType(item.type)} · ${formatBytes(item.size)}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderAnalysis(items) {
+            if (!items.length) {
+                liveAnalysis.innerHTML = '';
+                return;
+            }
+
+            if (items.length > 1) {
+                let totalSource = 0;
+                let totalEstimated = 0;
+
+                items.forEach((item) => {
+                    totalSource += item.size || 0;
+                    totalEstimated += estimateOutput(item).size || 0;
+                });
+
+                const diff = totalSource - totalEstimated;
+                const diffPercent = totalSource > 0 ? Math.round((diff / totalSource) * 100) : 0;
+
+                liveAnalysis.innerHTML = `
+                    <div class="analysis-title">Прогноз по выбранным файлам</div>
+                    <div class="analysis-grid">
+                        <div class="analysis-item"><div class="analysis-label">Исходный размер</div><div class="analysis-value">${formatBytes(totalSource)}</div></div>
+                        <div class="analysis-item"><div class="analysis-label">Примерный итог</div><div class="analysis-value">${formatBytes(totalEstimated)}</div></div>
+                        <div class="analysis-item"><div class="analysis-label">Уменьшение</div><div class="analysis-value">${diff > 0 ? formatBytes(diff) : 'Без уменьшения'}</div></div>
+                        <div class="analysis-item"><div class="analysis-label">В процентах</div><div class="analysis-value">${diffPercent > 0 ? diffPercent + '%' : '—'}</div></div>
+                    </div>
+                    <div class="analysis-note">Для нескольких файлов показывается общий прогноз. Точный серверный расчёт делается для одного файла.</div>
+                `;
+                return;
+            }
+
+            const item = items[0];
+            const sourceSize = item.size;
+            const waitingExactPreview = uploadedFiles.length === 1 && !currentExactPreview;
+            const estimate = waitingExactPreview ? { size: sourceSize } : estimateOutput(item);
+            const estimatedSize = estimate.size || sourceSize;
+            const savedSize = Math.max(0, sourceSize - estimatedSize);
+            const savedPercent = sourceSize > 0 ? Math.round((savedSize / sourceSize) * 100) : 0;
+            const meta = item.meta || {};
+            
+            const metaPotentialBytes = Math.max(0, Number(currentExactPreview?.meta_potential_bytes || 0));
+            const metaSavedBytes = Math.max(0, Number(currentExactPreview?.meta_saved_bytes || 0));
+            const sizeWithoutMetaRemoval = stripMetaInput.checked
+                ? estimatedSize + metaSavedBytes
+                : estimatedSize;
+
+            let extraBlocks = '';
+            if (stripMetaInput.checked) {
+                extraBlocks += `
+                    <div class="analysis-item"><div class="analysis-label">Размер без удаления метаданных</div><div class="analysis-value">${formatBytes(sizeWithoutMetaRemoval)}</div></div>
+                    <div class="analysis-item"><div class="analysis-label">Экономия на метаданных</div><div class="analysis-value">${metaSavedBytes > 0 ? formatBytes(metaSavedBytes) : '0 Б'}</div></div>
+                `;
+            } else if (metaPotentialBytes > 0) {
+                extraBlocks += `
+                    <div class="analysis-item"><div class="analysis-label">Потенциальная экономия на метаданных</div><div class="analysis-value">${formatBytes(metaPotentialBytes)}</div></div>
+                `;
+            }
+            let note = currentExactPreview
+                ? (currentExactPreview.estimated
+                    ? 'Показана серверная оценка размера.'
+                    : 'Показан точный размер уже подготовленного файла на сервере.')
+                : 'Считается точный размер на сервере. До расчёта показывается исходный вес без гаданий.';
+
+            if (previewPending) {
+                note = (item.type === 'video' || item.type === 'audio')
+                    ? 'Считается оценка размера на сервере, включая влияние удаления метаданных. Можно нажать «Конвертировать» в любой момент.'
+                    : 'Идёт точный предпросчёт. Для части форматов также показывается влияние удаления метаданных.';
+            }
+
+            if (item.type === 'video') {
+                const sourceBitrate = meta.bitrate ? Math.round(meta.bitrate / 1000) : null;
+                extraBlocks += `
+                    <div class="analysis-item"><div class="analysis-label">Исходный bitrate</div><div class="analysis-value">${sourceBitrate ? sourceBitrate + ' kbps' : '—'}</div></div>
+                    <div class="analysis-item"><div class="analysis-label">Новый bitrate</div><div class="analysis-value">${estimate.videoBitrateKbps ? estimate.videoBitrateKbps + ' kbps' : '—'}</div></div>
+                `;
+            }
+
+            if ((item.type === 'video' || item.type === 'audio') && meta.duration) {
+                extraBlocks += `<div class="analysis-item"><div class="analysis-label">Длительность</div><div class="analysis-value">${formatDuration(meta.duration)}</div></div>`;
+            }
+
+            if (item.type === 'image' && meta.width && meta.height) {
+                const w = parseInt(resizeWInput.value || '0', 10) || meta.width || 0;
+                const h = parseInt(resizeHInput.value || '0', 10) || meta.height || 0;
+                extraBlocks += `
+                    <div class="analysis-item"><div class="analysis-label">Исходный размер</div><div class="analysis-value">${meta.width} × ${meta.height}</div></div>
+                    <div class="analysis-item"><div class="analysis-label">Новый размер</div><div class="analysis-value">${w} × ${h}</div></div>
+                `;
+            }
+
+            liveAnalysis.innerHTML = `
+                <div class="analysis-title">Прогноз по файлу</div>
+                <div class="analysis-grid">
+                    <div class="analysis-item"><div class="analysis-label">Исходный файл</div><div class="analysis-value">${escapeHtml(item.name)}</div></div>
+                    <div class="analysis-item"><div class="analysis-label">Новый файл</div><div class="analysis-value">${escapeHtml(getOutputFileName(item.name))}</div></div>
+                    <div class="analysis-item"><div class="analysis-label">Исходный размер</div><div class="analysis-value">${formatBytes(sourceSize)}</div></div>
+                    <div class="analysis-item"><div class="analysis-label">${
+                        stripMetaInput.checked
+                            ? (currentExactPreview ? 'Итог после удаления метаданных' : 'Предварительный итог после удаления метаданных')
+                            : (currentExactPreview ? 'Точный итоговый размер' : 'Предварительный итоговый размер')
+                    }</div><div class="analysis-value">${formatBytes(estimatedSize)}</div></div>
+                    <div class="analysis-item"><div class="analysis-label">Уменьшение</div><div class="analysis-value">${savedSize > 0 ? formatBytes(savedSize) : 'Без уменьшения'}</div></div>
+                    <div class="analysis-item"><div class="analysis-label">В процентах</div><div class="analysis-value">${savedPercent > 0 ? savedPercent + '%' : '—'}</div></div>
+                    ${extraBlocks}
+                </div>
+                <div class="analysis-note">${note}</div>
+            `;
+        }
+
+        function refreshPanels() {
+            updateQualityDisplay();
+            syncQualityPanels();
+            updateCompressionModeUi();
+            updateImageTools();
+            updateFormatCardUi();
+            updateStatusUI();
+
+            const count = uploadedFiles.length;
+
+            if (count > 0) {
+                let label = `Выбрано файлов: ${count}`;
+
+                if (uploadState.active) label = `Загружаем файлов: ${count}...`;
+                else if (previewPending) label += ' · идёт точный расчёт...';
+                else if (convertState.active) label += ' · идёт конвертация...';
+
+                fileCountSpan.textContent = label;
+                fileCountSpan.style.color = '#7eb6ff';
+                dropZone.classList.add('has-files');
+
+                fileInfo.innerHTML = count === 1
+                    ? renderSingleFileInfo(uploadedFiles[0])
+                    : renderMultipleFilesInfo(uploadedFiles);
+
+                renderAnalysis(uploadedFiles);
+                return;
+            }
+
+            fileCountSpan.textContent = 'Файлы не выбраны';
+            fileCountSpan.style.color = '#7a8797';
+            dropZone.classList.remove('has-files');
+            fileInfo.innerHTML = '';
+            liveAnalysis.innerHTML = '';
+        }
+
+        function initImageSizeStateFromFile(file) {
+            const meta = file?.meta || {};
+
+            if (!meta.width || !meta.height) {
+                imageSizeState = { originalWidth: 0, originalHeight: 0, width: 0, height: 0 };
+                resizeWInput.value = '0';
+                resizeHInput.value = '0';
+                return;
+            }
+
+            imageSizeState = {
+                originalWidth: meta.width,
+                originalHeight: meta.height,
+                width: meta.width,
+                height: meta.height,
+            };
+
+            resizeWInput.value = '0';
+            resizeHInput.value = '0';
+
+            imageWidthSlider.min = '10';
+            imageWidthSlider.max = String(meta.width);
+            imageWidthSlider.value = String(meta.width);
+
+            imageHeightSlider.min = '10';
+            imageHeightSlider.max = String(meta.height);
+            imageHeightSlider.value = String(meta.height);
+        }
+
+        function updateImageTools() {
+            const showCard = isImageMode();
+            imageToolsCard.classList.toggle('hidden', !showCard);
+
+            if (!showCard) {
+                imageEditorPanel.classList.add('hidden');
+                imageEditorOpen = false;
+                resizeWInput.value = '0';
+                resizeHInput.value = '0';
+                return;
+            }
+
+            const file = uploadedFiles[0];
+            const meta = file.meta || {};
+
+            imageSummary.textContent = meta.width && meta.height
+                ? `Исходный размер: ${meta.width} × ${meta.height}px`
+                : 'Исходный размер изображения пока не определён.';
+
+            if (!imageSizeState.originalWidth && meta.width && meta.height) {
+                initImageSizeStateFromFile(file);
+            }
+
+            imageWidthValue.textContent = `${imageSizeState.width || meta.width || 0} px`;
+            imageHeightValue.textContent = `${imageSizeState.height || meta.height || 0} px`;
+
+            const resultW = parseInt(resizeWInput.value || '0', 10) || meta.width || 0;
+            const resultH = parseInt(resizeHInput.value || '0', 10) || meta.height || 0;
+
+            imageResultSummary.textContent = `После конвертации: ${resultW} × ${resultH}px`;
+            toggleImageEditorBtn.textContent = imageEditorOpen ? 'Скрыть редактор размера' : 'Редактировать размер изображения';
+        }
+
+        function applyImageSize(width, height, triggerPreview = true) {
+            if (!imageSizeState.originalWidth || !imageSizeState.originalHeight) return;
+
+            width = Math.max(10, Math.min(imageSizeState.originalWidth, Math.round(width)));
+            height = Math.max(10, Math.min(imageSizeState.originalHeight, Math.round(height)));
+
+            imageSizeState.width = width;
+            imageSizeState.height = height;
+
+            imageWidthSlider.value = String(width);
+            imageHeightSlider.value = String(height);
+            imageWidthValue.textContent = `${width} px`;
+            imageHeightValue.textContent = `${height} px`;
+
+            if (width === imageSizeState.originalWidth && height === imageSizeState.originalHeight) {
+                resizeWInput.value = '0';
+                resizeHInput.value = '0';
+            } else {
+                resizeWInput.value = String(width);
+                resizeHInput.value = String(height);
+            }
+
+            updateImageTools();
+            refreshPanels();
+
+            if (triggerPreview) scheduleExactPreview();
+        }
+
+        function safeJsonParse(value) {
+            try {
+                return JSON.parse(value);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function uploadSelectedFiles() {
+            const files = Array.from(fileInput.files || []);
+
+            currentExactPreview = null;
+            currentPreviewToken = '';
+            previewPending = false;
+            clearTimeout(previewTimer);
+
+            if (previewAbortController) {
+                previewAbortController.abort();
+                previewAbortController = null;
+            }
+
+            if (!files.length) {
+                cleanupServerState().then(() => {
+                    uploadedFiles = [];
+                    stopUploadProgress();
+                    stopPreviewProgress();
+                    stopConvertProgress();
+                    refreshPanels();
+                });
+                return;
+            }
+
+            cleanupServerState().then(() => {
+                startUploadProgress('Загрузка файла на сервер');
+
+                const fd = new FormData();
+                fd.append('action', 'upload');
+                files.forEach((file) => fd.append('files[]', file));
+
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', 'analyze.php', true);
+                xhr.responseType = 'json';
+
+                xhr.upload.onprogress = (event) => {
+                    if (event.lengthComputable) {
+                        const percent = (event.loaded / event.total) * 100;
+                        setUploadProgress(percent, 'Загрузка файла на сервер');
+                    }
+                };
+
+                xhr.onload = () => {
+                    stopUploadProgress();
+
+                    const data = xhr.response || safeJsonParse(xhr.responseText);
+
+                    if (xhr.status < 200 || xhr.status >= 300 || !data || !data.ok) {
+                        uploadedFiles = [];
+                        refreshPanels();
+                        alert((data && data.error) || 'Не удалось загрузить файл на сервер');
+                        return;
+                    }
+
+                    uploadedFiles = Array.isArray(data.files) ? data.files : [];
+                    syncQualityForUploadedFileType();
+
+                    if (isImageMode()) {
+                        initImageSizeStateFromFile(uploadedFiles[0]);
+                    } else {
+                        imageSizeState = { originalWidth: 0, originalHeight: 0, width: 0, height: 0 };
+                        resizeWInput.value = '0';
+                        resizeHInput.value = '0';
+                    }
+
+                    refreshPanels();
+                    scheduleExactPreview();
+                };
+
+                xhr.onerror = () => {
+                    stopUploadProgress();
+                    uploadedFiles = [];
+                    refreshPanels();
+                    alert('Не удалось загрузить файл на сервер');
+                };
+
+                xhr.send(fd);
+            });
+        }
+
+        function scheduleExactPreview() {
+            clearTimeout(previewTimer);
+
+            if (previewAbortController) {
+                previewAbortController.abort();
+                previewAbortController = null;
+            }
+
+            currentExactPreview = null;
+            currentPreviewToken = '';
+            currentExactPreviewSignature = '';
+
+            if (uploadedFiles.length !== 1) {
+                previewPending = false;
+                stopPreviewProgress();
+                refreshPanels();
+                return;
+            }
+
+            if (isNoOpConversionForItem(uploadedFiles[0])) {
+                previewPending = false;
+                currentExactPreview = {
+                    token: '',
+                    name: uploadedFiles[0].name,
+                    size: uploadedFiles[0].size,
+                    estimated: false,
+                    meta_saved_bytes: 0,
+                    meta_potential_bytes: 0,
+                    strip_meta: false
+                };
+                stopPreviewProgress();
+                refreshPanels();
+                return;
+            }
+
+            previewPending = true;
+            startPreviewProgress('Идёт точный предпросчёт файла...');
+            refreshPanels();
+
+            previewTimer = setTimeout(requestExactPreview, 700);
+        }
+
+        async function requestExactPreview() {
+            if (uploadedFiles.length !== 1) {
+                previewPending = false;
+                stopPreviewProgress();
+                refreshPanels();
+                return;
+            }
+
+            const requestId = ++previewRequestId;
+            const file = uploadedFiles[0];
+
+            const fd = new FormData();
+            fd.append('action', 'preview');
+            fd.append('upload_token', file.token);
+            fd.append('convert_format', formatInput.value || 'pdf');
+            fd.append('quality', qualityInput.value || '100');
+            fd.append('resize_w', resizeWInput.value || '0');
+            fd.append('resize_h', resizeHInput.value || '0');
+            fd.append('strip_meta', stripMetaInput.checked ? '1' : '0');
+            fd.append('no_compress', noCompressInput.checked ? '1' : '0');
+
+            if (currentPreviewToken) {
+                fd.append('delete_preview_token', currentPreviewToken);
+            }
+
+            try {
+                previewAbortController = new AbortController();
+
+                const resp = await fetch('analyze.php', {
+                    method: 'POST',
+                    body: fd,
+                    signal: previewAbortController.signal
+                });
+
+                const data = await resp.json();
+
+                if (requestId !== previewRequestId) return;
+
+                previewPending = false;
+                previewAbortController = null;
+
+                if (!resp.ok || !data.ok) {
+                    throw new Error(data?.error || 'Не удалось построить точный предпросчёт');
+                }
+
+                currentPreviewToken = data.preview?.token || '';
+                currentExactPreview = data.preview || null;
+                currentExactPreviewSignature = buildPreviewSignature(file);
+
+                if (currentPreviewToken) {
+                    sessionPreviewTokens.add(currentPreviewToken);
+                }
+
+                setPreviewProgress(100, 'Точный предпросчёт завершён');
+                setTimeout(() => {
+                    if (!previewPending) stopPreviewProgress();
+                    refreshPanels();
+                }, 250);
+            } catch (e) {
+                if (requestId !== previewRequestId) return;
+
+                previewAbortController = null;
+                previewPending = false;
+                currentPreviewToken = '';
+                currentExactPreview = null;
+                currentExactPreviewSignature = '';
+
+                if (e && e.name === 'AbortError') {
+                    stopPreviewProgress();
+                    refreshPanels();
+                    return;
+                }
+
+                stopPreviewProgress();
+                refreshPanels();
+            }
+        }
+
+        function parseDownloadFilename(response) {
+            const explicitName = response.headers.get('X-Download-Filename');
+            if (explicitName) {
+                try {
+                    return decodeURIComponent(explicitName);
+                } catch (e) {
+                    return explicitName;
+                }
+            }
+
+            const disposition = response.headers.get('Content-Disposition') || '';
+            const filenameStarMatch = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+            if (filenameStarMatch) {
+                try {
+                    return decodeURIComponent(filenameStarMatch[1]);
+                } catch (e) {
+                    return filenameStarMatch[1];
+                }
+            }
+
+            const filenameMatch = disposition.match(/filename="?([^";]+)"?/i);
+            return filenameMatch ? filenameMatch[1] : null;
+        }
+
+        function deletePreviewOnServer(token, useBeacon = false) {
+            if (!token) return;
+
+            if (useBeacon && navigator.sendBeacon) {
+                const payload = new URLSearchParams();
+                payload.append('action', 'delete_preview');
+                payload.append('preview_token', token);
+                navigator.sendBeacon('analyze.php', payload);
+                return;
+            }
+
+            const fd = new FormData();
+            fd.append('action', 'delete_preview');
+            fd.append('preview_token', token);
+            fetch('analyze.php', { method: 'POST', body: fd, keepalive: true }).catch(() => {});
+        }
+
+        function cleanupUploadsOnServer(tokens, useBeacon = false) {
+            if (!tokens.length) return;
+
+            if (useBeacon && navigator.sendBeacon) {
+                const payload = new URLSearchParams();
+                payload.append('action', 'cleanup_uploads');
+                tokens.forEach((token) => payload.append('upload_tokens[]', token));
+                navigator.sendBeacon('analyze.php', payload);
+                return;
+            }
+
+            const fd = new FormData();
+            fd.append('action', 'cleanup_uploads');
+            tokens.forEach((token) => fd.append('upload_tokens[]', token));
+            fetch('analyze.php', { method: 'POST', body: fd, keepalive: true }).catch(() => {});
+        }
+
+        async function cleanupServerState(options = {}) {
+            const keepConvert = !!options.keepConvert;
+
+            if (previewAbortController) {
+                previewAbortController.abort();
+                previewAbortController = null;
+            }
+
+            clearTimeout(previewTimer);
+            previewPending = false;
+            currentExactPreview = null;
+            currentExactPreviewSignature = '';
+
+            const tokensToRemove = new Set(sessionPreviewTokens);
+            if (currentPreviewToken) {
+                tokensToRemove.add(currentPreviewToken);
+            }
+            tokensToRemove.forEach((t) => deletePreviewOnServer(t));
+            currentPreviewToken = '';
+            sessionPreviewTokens.clear();
+
+            if (uploadedFiles.length) {
+                cleanupUploadsOnServer(uploadedFiles.map((item) => item.token));
+            }
+
+            stopPreviewProgress();
+            if (!keepConvert) {
+                stopConvertProgress();
+            }
+        }
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach((eventName) => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        dropZone.addEventListener('dragenter', () => dropZone.classList.add('highlight'));
+        dropZone.addEventListener('dragover', () => dropZone.classList.add('highlight'));
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('highlight'));
+
+        dropZone.addEventListener('drop', (e) => {
+            preventDefaults(e);
+            dropZone.classList.remove('highlight');
+            const files = e.dataTransfer?.files;
+            if (!files || !files.length) return;
+            fileInput.files = files;
+            uploadSelectedFiles();
+        });
+
+        dropZone.addEventListener('click', (e) => {
+            if (e.target !== fileInput) fileInput.click();
+        });
+
+        fileInput.addEventListener('change', uploadSelectedFiles);
+
+        qualityInput.addEventListener('input', () => {
+            updateQualityDisplay();
+            refreshPanels();
+            scheduleExactPreview();
+        });
+
+        formatMenuTrigger.addEventListener('click', () => {
+            if (formatMenuTrigger.disabled || !showsFormatPicker()) return;
+            openFormatMenu();
+        });
+
+        formatBackdrop.addEventListener('click', closeFormatMenu);
+        formatSheetClose.addEventListener('click', closeFormatMenu);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeFormatMenu();
+        });
+
+        stripMetaInput.addEventListener('change', () => {
+            refreshPanels();
+            scheduleExactPreview();
+        });
+        
+        noCompressInput.addEventListener('change', () => {
+            if (noCompressInput.checked) {
+                qualityInput.value = '100';
+                docModeButtons.forEach((btn) => {
+                    btn.classList.toggle('active', btn.dataset.docQuality === '90');
+                });
+            }
+        
+            refreshPanels();
+            scheduleExactPreview();
+        });
+
+        docModeButtons.forEach((btn) => {
+            btn.addEventListener('click', () => setPresetQuality(btn.dataset.docQuality));
+        });
+
+        toggleImageEditorBtn.addEventListener('click', () => {
+            imageEditorOpen = !imageEditorOpen;
+            imageEditorPanel.classList.toggle('hidden', !imageEditorOpen);
+            updateImageTools();
+        });
+
+        imageWidthSlider.addEventListener('input', () => {
+            if (!imageSizeState.originalWidth || !imageSizeState.originalHeight) return;
+
+            let width = parseInt(imageWidthSlider.value || '0', 10);
+            let height = lockAspectInput.checked
+                ? Math.round(width * (imageSizeState.originalHeight / imageSizeState.originalWidth))
+                : imageSizeState.height;
+
+            if (!lockAspectInput.checked) {
+                height = parseInt(imageHeightSlider.value || imageSizeState.height, 10);
+            }
+
+            applyImageSize(width, height);
+        });
+
+        imageHeightSlider.addEventListener('input', () => {
+            if (!imageSizeState.originalWidth || !imageSizeState.originalHeight) return;
+
+            let height = parseInt(imageHeightSlider.value || '0', 10);
+            let width = lockAspectInput.checked
+                ? Math.round(height * (imageSizeState.originalWidth / imageSizeState.originalHeight))
+                : imageSizeState.width;
+
+            if (!lockAspectInput.checked) {
+                width = parseInt(imageWidthSlider.value || imageSizeState.width, 10);
+            }
+
+            applyImageSize(width, height);
+        });
+
+        resetImageSizeBtn.addEventListener('click', () => {
+            if (!imageSizeState.originalWidth || !imageSizeState.originalHeight) return;
+            applyImageSize(imageSizeState.originalWidth, imageSizeState.originalHeight);
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+        
+            if (!uploadedFiles.length) {
+                alert('Сначала выбери хотя бы один файл.');
+                return;
+            }
+        
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span>Обработка...</span>';
+            submitBtn.style.opacity = '0.7';
+        
+            if (previewAbortController) {
+                previewAbortController.abort();
+                previewAbortController = null;
+            }
+        
+            clearTimeout(previewTimer);
+            previewPending = false;
+        
+            startConvertProgress('Идёт конвертация и подготовка файла...');
+            refreshPanels();
+        
+            const fd = new FormData();
+            fd.append('convert_format', formatInput.value || 'pdf');
+            fd.append('quality', qualityInput.value || '100');
+            fd.append('resize_w', resizeWInput.value || '0');
+            fd.append('resize_h', resizeHInput.value || '0');
+        
+            if (stripMetaInput.checked) {
+                fd.append('strip_meta', '1');
+            }
+            
+            if (noCompressInput.checked) {
+                fd.append('no_compress', '1');
+            }
+        
+            uploadedFiles.forEach((item) => fd.append('upload_tokens[]', item.token));
+            sessionPreviewTokens.forEach((t) => fd.append('cleanup_preview_tokens[]', t));
+        
+            const exactPreviewMatchesCurrent =
+                uploadedFiles.length === 1 &&
+                currentPreviewToken &&
+                currentExactPreview &&
+                currentExactPreviewSignature === buildPreviewSignature(uploadedFiles[0]);
+            
+            if (exactPreviewMatchesCurrent) {
+                fd.append('current_preview_token', currentPreviewToken);
+            }
+        
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: fd
+                });
+        
+                if (!response.ok) {
+                    const text = await response.text();
+                    throw new Error(text || ('Ошибка ответа сервера: ' + response.status));
+                }
+        
+                clearConvertTicker();
+                setConvertProgress(98, 'Файл готов, подготавливаем скачивание...');
+                
+                const blob = await response.blob();
+                if (!blob || blob.size === 0) {
+                    throw new Error('Сервер вернул пустой файл');
+                }
+                
+                const fileName = parseDownloadFilename(response) || (
+                    uploadedFiles.length > 1
+                        ? 'converted_files.zip'
+                        : getOutputFileName(uploadedFiles[0].name)
+                );
+                
+                setConvertProgress(100, 'Файл отправляется на устройство...');
+                
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                setConvertProgress(100, 'Скачивание началось');
+                a.remove();
+                
+                setTimeout(() => {
+                    URL.revokeObjectURL(url);
+                }, 15000);
+                
+                setTimeout(async () => {
+                    try {
+                        await cleanupServerState({ keepConvert: true });
+                    } catch (e) {}
+                
+                    uploadedFiles = [];
+                    currentPreviewToken = '';
+                    currentExactPreview = null;
+                    previewPending = false;
+                    fileInput.value = '';
+                    fileInfo.innerHTML = '';
+                    liveAnalysis.innerHTML = '';
+                    imageEditorOpen = false;
+                    imageSizeState = { originalWidth: 0, originalHeight: 0, width: 0, height: 0 };
+                    resizeWInput.value = '0';
+                    resizeHInput.value = '0';
+                    qualityInput.value = '100';
+                    stripMetaInput.checked = false;
+                    noCompressInput.checked = false;
+                    docModeButtons.forEach((btn) => {
+                        btn.classList.toggle('active', btn.dataset.docQuality === '90');
+                    });
+                
+                    stopConvertProgress(false);
+                
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<span>Конвертировать</span>';
+                    submitBtn.style.opacity = '1';
+                    updateFormatTriggerLabel();
+                    refreshPanels();
+                
+                    setTimeout(() => {
+                        stopConvertProgress(true);
+                    }, 500);
+                }, 1800);
+            } catch (err) {
+                alert(err.message || 'Не удалось скачать результат.');
+                stopConvertProgress();
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span>Конвертировать</span>';
+                submitBtn.style.opacity = '1';
+                refreshPanels();
+            }
+        });
+
+        async function resetForm() {
+            if (!confirm('Сбросить все настройки?')) return;
+
+            await cleanupServerState();
+
+            uploadedFiles = [];
+            fileInput.value = '';
+            form.reset();
+            formatInput.value = 'pdf';
+            updateFormatTriggerLabel();
+
+            imageEditorOpen = false;
+            imageSizeState = { originalWidth: 0, originalHeight: 0, width: 0, height: 0 };
+
+            resizeWInput.value = '0';
+            resizeHInput.value = '0';
+
+            fileInfo.innerHTML = '';
+            liveAnalysis.innerHTML = '';
+
+            stopUploadProgress();
+            stopPreviewProgress();
+            stopConvertProgress();
+
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<span>Конвертировать</span>';
+            submitBtn.style.opacity = '1';
+
+            qualityInput.value = '100';
+            docModeButtons.forEach((btn) => {
+                btn.classList.toggle('active', btn.dataset.docQuality === '90');
+            });
+
+            updateQualityDisplay();
+            refreshPanels();
+        }
+
+        window.resetForm = resetForm;
+
+        window.addEventListener('beforeunload', () => {
+            if (currentPreviewToken) deletePreviewOnServer(currentPreviewToken, true);
+            if (uploadedFiles.length) cleanupUploadsOnServer(uploadedFiles.map((item) => item.token), true);
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateQualityDisplay();
+            updateFormatTriggerLabel();
+            refreshPanels();
+        });
+    </script>
+</body>
+</html>
